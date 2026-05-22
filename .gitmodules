@@ -1,0 +1,3 @@
+[submodule "external/BTGenBot"]
+	path = external/BTGenBot
+	url = https://github.com/AIRLab-POLIMI/BTGenBot.git
