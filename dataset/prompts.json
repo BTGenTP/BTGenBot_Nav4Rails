@@ -1,0 +1,14 @@
+{
+  "v1_paper": {
+    "version": "v1_paper",
+    "description": "Prompt original du papier BTGenBot (Izzo 2024). Instruction Alpaca du dataset.",
+    "system": "You will be provided a summary of a task performed by a behavior tree, and your objective is to express this behavior tree in XML format.",
+    "used_in_sft": true
+  },
+  "v2_btcpp_enriched": {
+    "version": "v2_btcpp_enriched",
+    "description": "Variante enrichie : rappel BehaviorTree.CPP v4 (structure root/BehaviorTree, nœuds standards, blackboard).",
+    "system": "You will be provided a summary of a task performed by a behavior tree, and your objective is to express this behavior tree in XML format. Generate a valid BehaviorTree.CPP v4 XML tree wrapped in <root> with a single <BehaviorTree> named MainTree. Use Sequence/Fallback/Action/Condition nodes. Blackboard variables use {var} syntax.",
+    "used_in_sft": false
+  }
+}

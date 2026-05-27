@@ -1,0 +1,81 @@
+pattern,count,scope,depth
+"Fallback(Condition, Action)",31,recovery,2
+"Fallback(Condition, ForceFailure(Action))",27,recovery,2
+"RecoveryNode(FollowPath, ClearEntireCostmap)",26,recovery,2
+"Fallback(Action, Action)",25,recovery,2
+"Fallback(Action, ForceFailure(Action))",25,recovery,2
+"RecoveryNode(PipelineSequence(RateController, RecoveryNode), ReactiveFallback(GoalUpdated, SequenceStar))",23,recovery,2
+"RecoveryNode(ComputePathToPose, ClearEntireCostmap)",21,recovery,2
+"ReactiveFallback(GoalUpdated, SequenceStar(ClearEntireCostmap, ClearEntireCostmap, Spin, Wait))",21,recovery,2
+"Fallback(Condition, Condition)",20,recovery,2
+"Fallback(Sequence(Condition, Action), Action)",19,recovery,2
+"ReactiveFallback(GoalUpdated, ClearEntireCostmap)",16,recovery,2
+"Fallback(Timeout(Condition), Action)",15,recovery,2
+"Fallback(SequenceStar(Action, Action, Action, Action, Action, Action, Action, Action), Action)",12,recovery,2
+"ReactiveFallback(Condition, KeepRunningUntilFailure(Action))",12,recovery,2
+"ReactiveFallback(GoalUpdated, Wait)",11,recovery,2
+"Fallback(GoalReached, ComputePathToPose)",10,recovery,2
+"Fallback(Inverter(Condition), Action)",10,recovery,2
+"RecoveryNode(PipelineSequence(RateController, RecoveryNode), ReactiveFallback(GoalUpdated, Wait))",10,recovery,2
+"RecoveryNode(ComputePathToPose, ReactiveFallback(GoalUpdated, RoundRobin))",10,recovery,2
+"ReactiveFallback(GoalUpdated, RoundRobin(ClearEntireCostmap, Wait))",10,recovery,2
+"Fallback(Condition, Action)",31,recovery,3
+"Fallback(Condition, ForceFailure(Action))",27,recovery,3
+"RecoveryNode(FollowPath, ClearEntireCostmap)",26,recovery,3
+"Fallback(Action, Action)",25,recovery,3
+"Fallback(Action, ForceFailure(Action))",25,recovery,3
+"RecoveryNode(ComputePathToPose, ClearEntireCostmap)",21,recovery,3
+"ReactiveFallback(GoalUpdated, SequenceStar(ClearEntireCostmap, ClearEntireCostmap, Spin, Wait))",21,recovery,3
+"RecoveryNode(PipelineSequence(RateController(RecoveryNode), RecoveryNode(FollowPath, ClearEntireCostmap)), ReactiveFallback(GoalUpdated, SequenceStar(ClearEntireCostmap, ClearEntireCostmap, Spin, Wait)))",20,recovery,3
+"Fallback(Condition, Condition)",20,recovery,3
+"Fallback(Sequence(Condition, Action), Action)",19,recovery,3
+"ReactiveFallback(GoalUpdated, ClearEntireCostmap)",16,recovery,3
+"Fallback(Timeout(Condition), Action)",15,recovery,3
+"Fallback(SequenceStar(Action, Action, Action, Action, Action, Action, Action, Action), Action)",12,recovery,3
+"ReactiveFallback(Condition, KeepRunningUntilFailure(Action))",12,recovery,3
+"ReactiveFallback(GoalUpdated, Wait)",11,recovery,3
+"Fallback(GoalReached, ComputePathToPose)",10,recovery,3
+"Fallback(Inverter(Condition), Action)",10,recovery,3
+"RecoveryNode(PipelineSequence(RateController(RecoveryNode), RecoveryNode(FollowPath, ReactiveFallback)), ReactiveFallback(GoalUpdated, Wait))",10,recovery,3
+"RecoveryNode(ComputePathToPose, ReactiveFallback(GoalUpdated, RoundRobin(ClearEntireCostmap, Wait)))",10,recovery,3
+"ReactiveFallback(GoalUpdated, RoundRobin(ClearEntireCostmap, Wait))",10,recovery,3
+SetBlackboard,364,all,2
+ClearEntireCostmap,180,all,2
+TextToSpeechActionClient,156,all,2
+ComputePathToPose,146,all,2
+FollowPath,138,all,2
+"Sequence(Condition, Action)",109,all,2
+GoalUpdated,83,all,2
+Wait,77,all,2
+"Sequence(Action, Action)",76,all,2
+MoveAhead,72,all,2
+TrackAction,64,all,2
+Spin,61,all,2
+AlwaysSuccess,42,all,2
+Turn,41,all,2
+MoveBase,37,all,2
+"BB_Precondition(Fallback(SequenceStar, Action))",36,all,2
+AntennaAction,33,all,2
+"Fallback(Condition, Action)",31,all,2
+"SequenceStar(Action, Action)",30,all,2
+Nav2Client,30,all,2
+SetBlackboard,364,all,3
+ClearEntireCostmap,180,all,3
+TextToSpeechActionClient,156,all,3
+ComputePathToPose,146,all,3
+FollowPath,138,all,3
+"Sequence(Condition, Action)",109,all,3
+GoalUpdated,83,all,3
+Wait,77,all,3
+"Sequence(Action, Action)",76,all,3
+MoveAhead,72,all,3
+TrackAction,64,all,3
+Spin,61,all,3
+AlwaysSuccess,42,all,3
+Turn,41,all,3
+MoveBase,37,all,3
+AntennaAction,33,all,3
+"Fallback(Condition, Action)",31,all,3
+"SequenceStar(Action, Action)",30,all,3
+Nav2Client,30,all,3
+"Sequence(Action, Action, Action)",30,all,3

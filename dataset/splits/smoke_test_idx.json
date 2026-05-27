@@ -1,0 +1,68 @@
+{
+  "smoke_test_record_ids": [
+    8,
+    36,
+    50,
+    78,
+    133,
+    214,
+    223,
+    241,
+    303,
+    357,
+    359,
+    363,
+    405,
+    453,
+    507
+  ],
+  "n": 15,
+  "seed": 42,
+  "spec": [
+    [
+      "navigation",
+      "small",
+      3
+    ],
+    [
+      "navigation",
+      "medium",
+      3
+    ],
+    [
+      "navigation",
+      "large",
+      3
+    ],
+    [
+      "manipulation",
+      "small",
+      1
+    ],
+    [
+      "manipulation",
+      "medium",
+      1
+    ],
+    [
+      "perception",
+      "small",
+      1
+    ],
+    [
+      "perception",
+      "medium",
+      1
+    ],
+    [
+      "other",
+      "small",
+      1
+    ],
+    [
+      "other",
+      "medium",
+      1
+    ]
+  ]
+}
