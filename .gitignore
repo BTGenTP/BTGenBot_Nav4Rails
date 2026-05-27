@@ -26,3 +26,10 @@ Thumbs.db
 
 # Local data overrides (anything matching *.local.*)
 *.local.*
+
+# LaTeX build artifacts (only .tex and .pdf are tracked in presentations/)
+presentations/**/*
+!presentations/
+!presentations/**/
+!presentations/**/*.tex
+!presentations/**/*.pdf
