@@ -1,0 +1,25 @@
+[project]
+name = "nav4rail-graph-rag"
+version = "0.1.0"
+description = "Training-free GraphRAG pipeline for Nav2/BehaviorTree.CPP XML generation."
+readme = "README.md"
+requires-python = ">=3.11"
+authors = [{ name = "NAV4RAIL" }]
+dependencies = []
+
+[project.optional-dependencies]
+graph = ["networkx>=3.2"]
+llm = ["litellm>=1.40"]
+observability = ["opentelemetry-api>=1.24", "wandb>=0.17"]
+dev = ["pytest>=8.0", "ruff>=0.5"]
+
+[project.scripts]
+nav4rail-graph-rag = "nav4rail_graph_rag.cli:main"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
