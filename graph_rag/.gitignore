@@ -1,2 +1,11 @@
-rag/*
-../rag/*
+.env
+.env.*
+!.env.example
+*.local.*
+artifacts/
+runs/
+wandb/
+.pytest_cache/
+.ruff_cache/
+__pycache__/
+*.py[cod]

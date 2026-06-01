@@ -3,7 +3,7 @@ name = "nav4rail-graph-rag"
 version = "0.1.0"
 description = "Training-free GraphRAG pipeline for Nav2/BehaviorTree.CPP XML generation."
 readme = "README.md"
-requires-python = ">=3.11"
+requires-python = ">=3.10"
 authors = [{ name = "NAV4RAIL" }]
 dependencies = []
 
@@ -18,7 +18,6 @@ nav4rail-graph-rag = "nav4rail_graph_rag.cli:main"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-pythonpath = ["src"]
 
 [tool.ruff]
 line-length = 100

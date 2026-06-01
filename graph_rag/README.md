@@ -16,10 +16,43 @@ This package does not require cloud credentials for the offline MVP. Cloud LLM c
 
 ```bash
 cd repositories/BTGenBot_Nav4Rails/graph_rag
-python -m pytest -q
+python3 -m pip install -e ".[dev]"
+python3 -m pytest -q
 python -m nav4rail_graph_rag ingest --dataset ../dataset/bt_dataset.json --out artifacts
 python -m nav4rail_graph_rag generate "Patrouiller la section 4, inspecter, puis revenir au depot."
 ```
+
+If you do not install the package, use `PYTHONPATH=src` from this directory:
+
+```bash
+cd repositories/BTGenBot_Nav4Rails/graph_rag
+PYTHONPATH=src python3 -m nav4rail_graph_rag ingest --dataset ../dataset/bt_dataset.json --out artifacts
+```
+
+## Online Inference
+
+Install the optional online dependencies and expose provider keys through the environment:
+
+```bash
+python3 -m pip install -e ".[llm,observability]"
+export MISTRAL_API_KEY=...
+export NAV4RAIL_GRAPHRAG_LLM_PROVIDER=mistral
+export NAV4RAIL_GRAPHRAG_LLM_MODEL=mistral/mistral-large-latest
+python3 -m nav4rail_graph_rag generate "Navigate to the goal pose and follow the path."
+```
+
+Supported provider values are `mistral`, `anthropic`, `openai`, and `litellm`. The model string is passed to LiteLLM, so OpenAI-compatible local/self-hosted backends can be added later by setting the usual LiteLLM environment variables. A local `.env` file is loaded automatically; real keys should stay out of git.
+
+## W&B Tracking
+
+```bash
+export WANDB_API_KEY=...
+export NAV4RAIL_GRAPHRAG_WANDB_ENABLED=true
+export NAV4RAIL_GRAPHRAG_WANDB_PROJECT=nav4rail-graphrag
+PYTHONPATH=src python3 -m nav4rail_graph_rag eval --dataset ../dataset/bt_dataset.json --out runs
+```
+
+W&B logs validation rates, retrieved skill counts, LLM latency, token usage and estimated cost when the provider exposes it.
 
 ## Project Shape
 
