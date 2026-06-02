@@ -168,6 +168,76 @@
   Output : distribution \textbf{log-normale} avec longue traîne --- quelques BTs Nav2 monstrueux dominent les statistiques.}
 \end{frame}
 
+\begin{frame}
+  \frametitle{Vocabulaire XML --- structure vs domaine}
+
+  \begin{columns}[T]
+    \begin{column}{0.50\textwidth}
+      \begin{center}
+        \includegraphics[width=\textwidth]{top_tags.png}
+      \end{center}
+    \end{column}
+    \begin{column}{0.48\textwidth}
+      {\scriptsize\begin{tabular}{lr}
+        \toprule
+        Couche & Volume \\
+        \midrule
+        Tags XML uniques (total) & 360 \\
+        Nœuds de contrôle BT.CPP & $\sim$12 \\
+        Skills domaine uniques & \textbf{1 223} \\
+        Variables blackboard \texttt{\{var\}} & 296 \\
+        \midrule
+        \multicolumn{2}{l}{\textit{Occurrences dans le dataset :}} \\
+        \texttt{Action} & 2 605 \\
+        \texttt{Sequence} & 855 \\
+        \texttt{SubTree} & 622 \\
+        \texttt{Fallback} & 299 \\
+        \bottomrule
+      \end{tabular}}
+
+      \vspace{0.5em}
+      \begin{exampleblock}{Deux niveaux d'abstraction}
+        \small Syntaxe structurelle (12 nœuds, stable) \textbf{+} vocabulaire ouvert (1\,223 skills, domaine-dépendant).
+        Le modèle doit apprendre les deux simultanément.
+      \end{exampleblock}
+    \end{column}
+  \end{columns}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Complexité structurelle par catégorie}
+
+  \begin{columns}[T]
+    \begin{column}{0.55\textwidth}
+      \begin{center}
+        \includegraphics[width=\textwidth]{complexity_by_category.png}
+      \end{center}
+    \end{column}
+    \begin{column}{0.43\textwidth}
+      {\scriptsize\begin{tabular}{lrr}
+        \toprule
+        Catégorie & Nœuds & Prof. \\
+        \midrule
+        navigation (N=434) & 14 & 6 \\
+        \quad + recovery (192) & 22 & 7 \\
+        manipulation (N=43) & 12 & 5 \\
+        perception (N=15) & 13 & 7 \\
+        other (N=100) & 6 & 4 \\
+        \midrule
+        \textit{NAV4RAIL réel} & \textit{112} & \textit{$\sim$7} \\
+        \bottomrule
+      \end{tabular}}
+
+      \vspace{0.4em}
+      {\scriptsize
+      Perception : profondeur = navigation+recovery avec \textbf{15$\times$ moins d'exemples} --- variance élevée.
+
+      \vspace{0.3em}
+      NAV4RAIL réel hors-échelle : 7$\times$ plus grand que la médiane dataset.}
+    \end{column}
+  \end{columns}
+\end{frame}
+
 %------------------------------------------------------------------------------
 \section{Validité XML et structure}
 %------------------------------------------------------------------------------
@@ -215,9 +285,93 @@
     \includegraphics[width=0.85\textwidth]{structure.png}
   \end{center}
 
-  \vspace{-0.5em}
+  \vspace{-0.4em}
+  \begin{center}
   {\small
   La plupart des BTs sont \textbf{petits à moyens} (médiane 15 nœuds, profondeur 5) mais quelques arbres atteignent 399 nœuds et 21 niveaux --- scénarios Nav2 complets avec recovery cascadé.}
+  \end{center}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Métriques de complexité --- distribution par catégorie}
+
+  \begin{center}
+    \includegraphics[width=0.90\textwidth]{complexity_by_category.png}
+  \end{center}
+
+  \vspace{-0.4em}
+  \begin{center}
+  {\scriptsize
+  Navigation avec recovery : médiane \textbf{22 nœuds}, profondeur \textbf{7} --- 60\% plus complexe que navigation simple.
+  Perception : profondeur élevée (7) sur seulement \textbf{15 exemples} --- variance forte, signal faible.
+  Ligne rouge = médiane globale du dataset. Le BT NAV4RAIL réel (112 nœuds) est hors-échelle.}
+  \end{center}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Largeur des BTs --- profil par niveau de profondeur}
+
+  \begin{center}
+    \includegraphics[width=0.90\textwidth]{width_profile.png}
+  \end{center}
+
+  \vspace{-0.3em}
+  \begin{center}
+  {\scriptsize
+  \textbf{BTGenBot :} largeur médiane max = \textbf{4} nœuds (p95 = 55). Distribution très resserrée : la majorité des BTs restent étroits.
+  \textbf{Exemple NAV4RAIL :} pic à profondeur 5 avec \textbf{52 nœuds} (9 primitives de mouvement $\times$ actions imbriquées) --- \textbf{13$\times$ plus large} que la médiane dataset.
+
+  $\Rightarrow$ Le modèle entraîné ne génère jamais de BTs aussi larges : risque de génération de structures linéaires (une branche unique) pour des tâches multi-primitives.}
+  \end{center}
+\end{frame}
+
+\begin{frame}
+  \frametitle{SubTreePlus --- absent du dataset, central dans NAV4RAIL}
+
+  \begin{columns}[T]
+    \begin{column}{0.50\textwidth}
+      \textbf{Dans BTGenBot (594 BTs) :}
+
+      \vspace{0.4em}
+      {\scriptsize\begin{tabular}{lr}
+        \toprule
+        Tag & Occurrences \\
+        \midrule
+        \texttt{SubTree} (API v3) & 622 (dans 90 BTs, 15\%) \\
+        \texttt{SubTreePlus} (API v4) & \textbf{0} \\
+        \bottomrule
+      \end{tabular}}
+
+      \vspace{0.6em}
+      \textbf{Dans NAV4RAIL réel :}
+
+      \vspace{0.4em}
+      {\scriptsize\begin{tabular}{lr}
+        \toprule
+        Tag & Occurrences \\
+        \midrule
+        \texttt{SubTreePlus} & \textbf{15} \\
+        \multicolumn{2}{l}{Architecture entièrement modulaire} \\
+        \multicolumn{2}{l}{\texttt{\_\_autoremap="true"} + remapping ports} \\
+        \bottomrule
+      \end{tabular}}
+    \end{column}
+    \begin{column}{0.48\textwidth}
+      \begin{alertblock}{Conséquence pour la génération}
+        \small Le modèle ne produira \textbf{jamais} \texttt{SubTreePlus} spontanément.
+
+        \vspace{0.3em}
+        Il générera soit :
+        \begin{itemize}
+          \item un arbre \textbf{monolithique} plat (distribution entraînement)
+          \item du \texttt{SubTree} v3 (présent à 15\% en training)
+        \end{itemize}
+
+        \vspace{0.3em}
+        $\Rightarrow$ Sans contrainte explicite dans le prompt, les BTs générés sont \textbf{structurellement incompatibles} avec l'architecture NAV4RAIL.
+      \end{alertblock}
+    \end{column}
+  \end{columns}
 \end{frame}
 
 %------------------------------------------------------------------------------
@@ -232,9 +386,11 @@
   \end{center}
 
   \vspace{-0.3em}
+  \begin{center}
   {\scriptsize
   \textbf{Méthode :} signal XML (skills présents) prioritaire, fallback regex sur input texte. 5 catégories canoniques.
   \textbf{Flag transverse} \texttt{has\_recovery\_pattern} = présence de \texttt{Fallback}/\texttt{RecoveryNode} avec \texttt{Sequence} imbriquée : \textbf{224 / 594} BTs (37.7\%), concentrés sur navigation (44\% des BTs nav).}
+  \end{center}
 \end{frame}
 
 \begin{frame}
@@ -275,17 +431,79 @@
 \end{frame}
 
 \begin{frame}
+  \frametitle{Anatomie comparative --- BTGenBot vs NAV4RAIL réel}
+
+  \vspace{0.2em}
+  \begin{center}
+  {\scriptsize\begin{tabular}{p{2.8cm}p{4.3cm}p{4.3cm}}
+    \toprule
+    & \textbf{BTGenBot} (médiane dataset) & \textbf{NAV4RAIL réel} (\texttt{behavior\_tree\_example.xml}) \\
+    \midrule
+    Définitions BT        & 1                              & \textbf{16} (main + 15 sous-arbres) \\
+    Nœuds totaux          & 15                             & \textbf{112} \\
+    Profondeur max        & 5                              & $\sim$7 par sous-arbre \\
+    Largeur max           & 4 (médiane)                    & \textbf{52} (exemple NAV4RAIL, profondeur 5) \\
+    \texttt{SubTreePlus}  & 0                              & \textbf{15} \\
+    Vocabulaire actions   & Nav2 (ClearEntireCostmap…)     & Inspection (ManageMeasurements…) \\
+    Logique inspection    & absente                        & \textbf{centrale} \\
+    \bottomrule
+  \end{tabular}}
+  \end{center}
+
+  \vspace{0.3em}
+  \begin{center}
+  {\scriptsize $\Rightarrow$ NAV4RAIL \textbf{7$\times$ plus grand} (nœuds), largeur \textbf{13$\times$} plus large au pic (52 vs 4), entièrement modulaire via \texttt{SubTreePlus}, vocabulaire métier totalement distinct.}
+  \end{center}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Bilan transférabilité --- ce qui passe, ce qui ne passe pas}
+
+  \begin{center}
+  {\scriptsize\begin{tabular}{p{2.2cm}p{5.0cm}p{4.5cm}}
+    \toprule
+    & Éléments & Justification \\
+    \midrule
+    \textbf{$\checkmark$ Transférable} &
+      Nœuds de contrôle : \texttt{Sequence}, \texttt{Fallback}, \texttt{ReactiveFallback}, \texttt{Repeat} &
+      Identiques BT.CPP 3.x et 4.x --- syntaxe partagée \\[0.3em]
+    \textbf{$\sim$ Partiel} &
+      Structure recovery \texttt{Fallback(Seq, Action)} &
+      Motif présent (38\% des BTs) mais actions Nav2-spécifiques \\[0.3em]
+    \textbf{$\times$ Non transférable} &
+      Vocabulaire action/condition (0/43 skills NAV4RAIL dans training) ;
+      \texttt{SubTreePlus} ; logique inspection &
+      Jamais vu en training \\
+    \bottomrule
+  \end{tabular}}
+  \end{center}
+
+  \vspace{0.2em}
+  \begin{center}
+  \begin{minipage}{0.90\textwidth}
+  \begin{alertblock}{Quelles pistes d'adaptation ?}
+    \small Le modèle doit être guidé sur le vocabulaire et la structure NAV4RAIL.
+    Mais comment ? \textbf{Prompt engineering} avec la liste des skills SNCF ?
+    \textbf{Second SFT} sur quelques exemples NAV4RAIL ? \textbf{RAG} sur les spécifications des BTs cibles ?
+    La réponse dépend du volume d'exemples disponibles --- aujourd'hui : \textbf{1 seul}.
+  \end{alertblock}
+  \end{minipage}
+  \end{center}
+\end{frame}
+
+\begin{frame}
   \frametitle{Recovery patterns --- Top motifs Nav2}
 
   \begin{center}
-    \includegraphics[width=0.78\textwidth]{recovery_patterns_d2.png}
+    \includegraphics[width=0.70\textwidth]{recovery_patterns_d2.png}
   \end{center}
 
-  \vspace{-0.4em}
+  \vspace{-0.3em}
+  \begin{center}
   {\scriptsize
-  \textbf{Top patterns :} \texttt{Fallback(Condition, Action)} (31), \texttt{RecoveryNode(FollowPath, ClearEntireCostmap)} (26), \texttt{RecoveryNode(ComputePathToPose, ClearEntireCostmap)} (21).
-
-  $\Rightarrow$ Signature canonique du recovery Nav2 (« essayer planifier, sinon nettoyer costmap »). Le modèle apprendra surtout la \textbf{syntaxe} de ces motifs BT, pas leur sémantique métier. Pour NAV4RAIL, ces patterns 2D ne sont pas transférables tels quels : seule l'idée générale d'une séquence corrective reste pertinente.}
+  \textbf{Top :} \texttt{Fallback(Condition, Action)} (31), \texttt{RecoveryNode(FollowPath, ClearEntireCostmap)} (26), \texttt{RecoveryNode(ComputePathToPose, ClearEntireCostmap)} (21).
+  $\Rightarrow$ Signature canonique du recovery Nav2. Le modèle apprend la \textbf{syntaxe}, pas la sémantique. Ces patterns 2D ne sont pas transférables tels quels à NAV4RAIL : seule l'idée de séquence corrective reste pertinente.}
+  \end{center}
 \end{frame}
 
 %------------------------------------------------------------------------------
