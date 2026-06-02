@@ -285,7 +285,7 @@
   {\scriptsize
   \textbf{Top patterns :} \texttt{Fallback(Condition, Action)} (31), \texttt{RecoveryNode(FollowPath, ClearEntireCostmap)} (26), \texttt{RecoveryNode(ComputePathToPose, ClearEntireCostmap)} (21).
 
-  $\Rightarrow$ Signature canonique du recovery Nav2 (« essayer planifier, sinon nettoyer costmap »). Le modèle apprendra ces briques en priorité --- utile pour SNCF (inspection : « capturer $\to$ réessayer angle $\to$ renoncer »).}
+  $\Rightarrow$ Signature canonique du recovery Nav2 (« essayer planifier, sinon nettoyer costmap »). Le modèle apprendra surtout la \textbf{syntaxe} de ces motifs BT, pas leur sémantique métier. Pour NAV4RAIL, ces patterns 2D ne sont pas transférables tels quels : seule l'idée générale d'une séquence corrective reste pertinente.}
 \end{frame}
 
 %------------------------------------------------------------------------------

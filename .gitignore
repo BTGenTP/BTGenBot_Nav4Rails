@@ -33,3 +33,7 @@ presentations/**/*
 !presentations/**/
 !presentations/**/*.tex
 !presentations/**/*.pdf
+
+reunion*.md
+BTGenBot*.md
+2024*.pdf
