@@ -456,6 +456,59 @@
   \end{center}
 \end{frame}
 
+\begin{frame}[shrink=10]
+  \frametitle{Comparatif réel --- même motif de contrôle, vocabulaires incompatibles}
+
+  \begin{columns}[T]
+    \begin{column}{0.48\textwidth}
+      {\small\textbf{BTGenBot} \textemdash{} record \#373 (Nav2)}\\
+      {\scriptsize\textit{Tâche : naviguer vers un but, récupérer si échec}}
+
+      \vspace{0.1em}
+      {\ttfamily\scriptsize\noindent%
+\textcolor{blue}{<RecoveryNode} retries="6"\textcolor{blue}{>}\\[0pt]%
+\hspace{0.6em}\textcolor{blue}{<PipelineSequence>}\\[0pt]%
+\hspace{1.2em}<ComputePathToPose goal="\{goal\}"\\[0pt]%
+\hspace{2.4em}path="\{path\}"/>\\[0pt]%
+\hspace{1.2em}<FollowPath path="\{path\}"/>\\[0pt]%
+\hspace{0.6em}\textcolor{blue}{</PipelineSequence>}\\[0pt]%
+\hspace{0.6em}\textcolor{blue}{<ReactiveFallback>}\\[0pt]%
+\hspace{1.2em}<GoalUpdated/>\\[0pt]%
+\hspace{1.2em}<Wait wait\_duration="5"/>\\[0pt]%
+\hspace{0.6em}\textcolor{blue}{</ReactiveFallback>}\\[0pt]%
+\textcolor{blue}{</RecoveryNode>}%
+      }
+    \end{column}
+    \begin{column}{0.50\textwidth}
+      {\small\textbf{Exemple NAV4RAIL} \textemdash{} \texttt{reach\_stop\_inspecting}}\\
+      {\scriptsize\textit{Tâche : se déplacer, inspecter, corriger si défaut qualité}}
+
+      \vspace{0.1em}
+      {\ttfamily\scriptsize\noindent%
+\textcolor{blue}{<Sequence>}\\[0pt]%
+\hspace{0.6em}<MoveAndStop motion\_params="\{p\}"/>\\[0pt]%
+\hspace{0.6em}<ManageMeasurements/>\\[0pt]%
+\hspace{0.6em}<AnalyseMeasurements/>\\[0pt]%
+\hspace{0.6em}\textcolor{blue}{<Fallback>}\\[0pt]%
+\hspace{1.2em}<MeasurementsQualityValidated/>\\[0pt]%
+\hspace{1.2em}\textcolor{blue}{<Sequence>}\\[0pt]%
+\hspace{1.8em}<GenerateCorrectiveSubSequence/>\\[0pt]%
+\hspace{1.8em}<InsertCorrectiveSubSequence/>\\[0pt]%
+\hspace{1.2em}\textcolor{blue}{</Sequence>}\\[0pt]%
+\hspace{0.6em}\textcolor{blue}{</Fallback>}\\[0pt]%
+\textcolor{blue}{</Sequence>}%
+      }
+    \end{column}
+  \end{columns}
+
+  \vspace{0.1em}
+  \begin{center}
+  {\scriptsize
+  Nœuds en \textcolor{blue}{bleu} = structure identique. Feuilles = vocabulaire : \textbf{0/7 skills en commun}.\\
+  Même motif conceptuel (Action $\to$ Vérification $\to$ Récupération), domaines totalement distincts.}
+  \end{center}
+\end{frame}
+
 \begin{frame}
   \frametitle{Bilan transférabilité --- ce qui passe, ce qui ne passe pas}
 
