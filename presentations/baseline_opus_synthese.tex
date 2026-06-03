@@ -1,0 +1,977 @@
+\documentclass[aspectratio=169]{beamer}
+
+\usepackage[utf8]{inputenc}
+\mode<presentation>
+\usetheme[visual,slim,framecount]{tptng}
+
+\usepackage[T1]{fontenc}
+\usepackage[french]{babel}
+\usepackage[babel]{microtype}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{amsmath}
+\usepackage{xcolor}
+\usepackage{tikz}
+\usepackage{pgfplots}
+
+\pgfplotsset{compat=1.18}
+
+\AtBeginSection[]{
+  \contentsframe[currentsection]
+}
+\renewcommand*{\contentsframename}{Plan}
+
+\title{Synthèse de la baseline BTGenBot}
+\subtitle{Claude Opus 4.8 face aux modèles du papier}
+
+\author{Benjamin Lepourtois \and Anne Faury \and Mohamed Amar \and Mourad Latoundji}
+\institute{Télécom Paris}
+\date[3 juin 2026]{3 juin 2026 \\ {\small NAV4RAIL}}
+
+\begin{document}
+
+\maketitle
+
+\section{Protocole d'évaluation}
+
+\begin{frame}
+  \frametitle{Cadre expérimental conservé}
+
+  \begin{columns}[T]
+    \begin{column}{0.57\textwidth}
+      \small
+      \textbf{Jeu d'évaluation :} les 9 tâches standardisées du papier BTGenBot (Izzo 2024), et non le dataset d'entraînement de 594 paires.
+
+      \vspace{0.4em}
+      \begin{center}
+        \begin{tabular}{clc}
+          \toprule
+          ID & Tâche & Complexité \\
+          \midrule
+          T1 & Navigation simple & $\star$ \\
+          T2 & Navigation avec priorité & $\star\star$ \\
+          T3 & Navigation avec fallback & $\star\star$ \\
+          T4 & Navigation + bras manipulateur & $\star\star$ \\
+          T5 & Exploration autonome & $\star\star\star$ \\
+          T6 & Exploration + manipulateur & $\star\star\star$ \\
+          T7 & Vision active + saisie & $\star\star\star\star$ \\
+          T8 & Traitement de matériaux & $\star\star\star\star$ \\
+          T9 & Assemblage multi-stations & $\star\star\star\star$ \\
+          \bottomrule
+        \end{tabular}
+      \end{center}
+    \end{column}
+    \begin{column}{0.39\textwidth}
+      \begin{exampleblock}{Source commune}
+        \small
+        Les descriptions NL et les BTs de référence proviennent du même référentiel :
+
+        \vspace{0.3em}
+        \texttt{external/BTGenBot/}\\
+        \texttt{bt\_generator/config/}\\
+        \texttt{example\_retrieving.yaml}
+      \end{exampleblock}
+
+      \begin{alertblock}{Point clé}
+        \small
+        Les sorties FT du papier étaient déjà publiées dans le dépôt GitHub officiel BTGenBot. Elles ont donc été réévaluées avec notre pipeline commun.
+      \end{alertblock}
+    \end{column}
+  \end{columns}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Zero-shot, one-shot et pipeline}
+
+  \begin{columns}[T]
+    \begin{column}{0.48\textwidth}
+      \begin{block}{Zero-shot / One-shot}
+        \small
+        \textbf{Zero-shot :} instructions système + description de tâche.
+
+        \vspace{0.3em}
+        \textbf{One-shot :} même entrée, plus un exemple fixe T1.
+
+        \vspace{0.3em}
+        T1 reste évaluée en zero-shot pour éviter de fournir sa propre réponse.
+      \end{block}
+    \end{column}
+    \begin{column}{0.48\textwidth}
+      \begin{block}{Pipeline d'évaluation}
+        \small
+        1. Génération du BT XML
+
+        2. Vérification syntaxique
+
+        3. Calcul Node-F1 et TED
+
+        4. Jugement binaire \og Correct / Incorrect \fg{} par Claude Opus 4.8
+      \end{block}
+    \end{column}
+  \end{columns}
+
+  \vspace{0.4em}
+  \begin{exampleblock}{Rigueur de comparaison}
+    \small
+    Les configurations Opus 4.8 et les sorties FT du papier sont comparées sur un pipeline commun.
+  \end{exampleblock}
+\end{frame}
+
+\section{Métriques}
+
+\begin{frame}
+  \frametitle{Métriques retenues}
+
+  \begin{columns}[T]
+    \begin{column}{0.48\textwidth}
+      \begin{block}{Syntaxe}
+        \small
+        \textbf{XML valide :} le XML est parseable.
+
+        \vspace{0.4em}
+        \textbf{Structure BT valide :} présence de \texttt{<root>} et de \texttt{<BehaviorTree>}.
+      \end{block}
+
+      \begin{alertblock}{Limite connue}
+        \small
+        Ce contrôle est moins strict que Groot2 : il ne valide ni toute la palette de nœuds, ni les paramètres ROS2.
+      \end{alertblock}
+    \end{column}
+    \begin{column}{0.48\textwidth}
+      \begin{block}{Sémantique}
+        \small
+        \textbf{Node-F1 :} proximité des types de nœuds.
+
+        \vspace{0.4em}
+        \textbf{TED :} distance structurelle entre arbres.
+
+        \vspace{0.4em}
+        \textbf{LLM-as-Judge :} adéquation description $\leftrightarrow$ BT.
+      \end{block}
+
+      \begin{exampleblock}{Lecture}
+        \small
+        Node-F1 et TED comparent au BT de référence. Le juge évalue la correspondance à la description.
+      \end{exampleblock}
+    \end{column}
+  \end{columns}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Node-F1 : définition}
+
+  \small
+  \textbf{Définition :} F1-score calculé sur le multiset des \textbf{types de nœuds} du BT généré vs le BT de référence.
+
+  \vspace{0.5em}
+  \textbf{Nœuds exclus :} \texttt{root}, \texttt{BehaviorTree}, \texttt{TreeNodesModel}, \texttt{input\_port}, \texttt{output\_port}, \texttt{inout\_port}.
+
+  \vspace{0.6em}
+  \[
+    \mathrm{Precision} = \frac{|N_{pred} \cap N_{ref}|}{|N_{pred}|}
+    \qquad
+    \mathrm{Recall} = \frac{|N_{pred} \cap N_{ref}|}{|N_{ref}|}
+  \]
+
+  \[
+    \mathrm{Node\text{-}F1} = \frac{2 \cdot \mathrm{Precision} \cdot \mathrm{Recall}}{\mathrm{Precision} + \mathrm{Recall}}
+  \]
+
+  \vspace{0.3em}
+  \begin{block}{Interprétation}
+    \small
+    La métrique récompense le bon choix des nœuds métier et leur proportion, pas seulement une structure XML valide.
+  \end{block}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Node-F1 : exemple concret sur T4}
+
+  \scriptsize
+  \begin{columns}[T]
+    \begin{column}{0.48\textwidth}
+      \textbf{BT de référence}\\
+      \texttt{<BehaviorTree>}\\
+      \texttt{\ \ <Sequence>}\\
+      \texttt{\ \ \ \ <MoveTo .../>}\\
+      \texttt{\ \ \ \ <ActivateManipulator/>}\\
+      \texttt{\ \ </Sequence>}\\
+      \texttt{</BehaviorTree>}
+
+      \vspace{0.5em}
+      \textbf{BT généré}\\
+      \texttt{<BehaviorTree>}\\
+      \texttt{\ \ <Sequence>}\\
+      \texttt{\ \ \ \ <Action .../>}\\
+      \texttt{\ \ \ \ <Action .../>}\\
+      \texttt{\ \ </Sequence>}\\
+      \texttt{</BehaviorTree>}
+    \end{column}
+    \begin{column}{0.48\textwidth}
+      \begin{tabular}{p{0.22\textwidth}p{0.23\textwidth}}
+        \toprule
+        Multiset & Types \\
+        \midrule
+        $N_{ref}$ & \{Sequence: 1, MoveTo: 1, ActivateManipulator: 1\} \\
+        $N_{pred}$ & \{Sequence: 1, Action: 2\} \\
+        $N_{ref} \cap N_{pred}$ & \{Sequence: 1\} \\
+        \bottomrule
+      \end{tabular}
+
+      \vspace{0.6em}
+      \[
+        \mathrm{Precision} = \frac{1}{3}
+        \qquad
+        \mathrm{Recall} = \frac{1}{3}
+      \]
+      \[
+        \mathrm{Node\text{-}F1} = 0.333
+      \]
+
+      \vspace{0.3em}
+      \textbf{Lecture :} la structure \texttt{Sequence} est correcte, mais les nœuds métier ont été remplacés par un \texttt{Action} générique.
+    \end{column}
+  \end{columns}
+\end{frame}
+
+\begin{frame}
+  \frametitle{TED : définition}
+
+  \small
+  \textbf{TED} (Tree Edit Distance) est la distance de Zhang-Shasha entre deux arbres ordonnés.
+
+  \vspace{0.5em}
+  \begin{itemize}
+    \item Elle compte le nombre minimal d'opérations nécessaires pour transformer le BT généré en BT de référence.
+    \item Les opérations sont : insertion, suppression, renommage de nœud.
+    \item \textbf{TED = 0} signifie un arbre identique ; plus la distance augmente, plus l'écart structurel est important.
+  \end{itemize}
+
+  \vspace{0.5em}
+  \begin{exampleblock}{Interprétation}
+    \small
+    TED $\leq 3$ : BT structurellement proche.\\
+    TED $> 10$ : structure significativement différente.
+  \end{exampleblock}
+\end{frame}
+
+\begin{frame}
+  \frametitle{TED : exemple concret sur T4}
+
+  \begin{columns}[T]
+    \begin{column}{0.47\textwidth}
+      \begin{block}{Arbre de référence}
+        \ttfamily\small
+        Sequence\\
+        / \hspace{3.5em} \\
+        MoveTo \hspace{1em} ActivateManipulator
+      \end{block}
+    \end{column}
+    \begin{column}{0.47\textwidth}
+      \begin{block}{Arbre généré}
+        \ttfamily\small
+        Sequence\\
+        / \hspace{3.5em} \\
+        Action \hspace{1.8em} Action
+      \end{block}
+    \end{column}
+  \end{columns}
+
+  \vspace{0.4em}
+  \begin{enumerate}
+    \item Renommer \texttt{Action} $\rightarrow$ \texttt{MoveTo}
+    \item Renommer \texttt{Action} $\rightarrow$ \texttt{ActivateManipulator}
+  \end{enumerate}
+
+  \vspace{0.3em}
+  \begin{alertblock}{Résultat}
+    \small
+    Deux opérations suffisent, donc \textbf{TED = 2}.
+  \end{alertblock}
+\end{frame}
+
+\begin{frame}
+  \frametitle{LLM-as-Judge : protocole de jugement}
+
+  \small
+  \textbf{Définition :} un juge reçoit la description en langage naturel et le BT XML généré, puis répond seulement \texttt{Correct} ou \texttt{Incorrect}.
+
+  \vspace{0.5em}
+  \begin{block}{Prompt du juge}
+    \ttfamily\scriptsize
+    Given a description of a behavior tree in natural language and a BT in XML format, say if the description matches the tree. Output only Correct or Incorrect.
+  \end{block}
+
+  \vspace{0.4em}
+  \begin{columns}[T]
+    \begin{column}{0.48\textwidth}
+      \begin{block}{Choix du juge}
+        \small
+        Claude Opus 4.8 est utilisé comme juge unique pour toutes les configurations.
+      \end{block}
+    \end{column}
+    \begin{column}{0.48\textwidth}
+      \begin{block}{Pourquoi pas Haiku ?}
+        \small
+        Haiku produisait des faux négatifs sur des cas limites sémantiquement valides ; Opus s'est montré plus cohérent.
+      \end{block}
+    \end{column}
+  \end{columns}
+\end{frame}
+
+\section{Comparatif complet}
+
+\begin{frame}
+  \frametitle{Comparatif complet sur un même référentiel}
+
+  \tiny
+  \setlength{\tabcolsep}{3pt}
+  \renewcommand{\arraystretch}{1.08}
+  \begin{center}
+    \resizebox{\textwidth}{!}{%
+      \begin{tabular}{llcccccc}
+        \toprule
+        Modèle & Mode & XML & BT & Node-F1 & TED & Judge Opus & Éval. papier \\
+        \midrule
+        \textbf{Opus 4.8 v4\_action\_aware} & ZS & \textbf{100} & \textbf{100} & \textbf{0.812} & \textbf{3.1} & 66.7 & -- \\
+        \textbf{Opus 4.8 v4\_action\_aware} & OS & \textbf{100} & \textbf{100} & 0.781 & 3.3 & 77.8 & -- \\
+        \textbf{Opus 4.8 v1\_paper} & OS & \textbf{100} & \textbf{100} & 0.733 & 4.7 & \textbf{88.9} & -- \\
+        \textbf{Opus 4.8 v1\_paper} & ZS & \textbf{100} & \textbf{100} & 0.538 & 6.0 & 77.8 & -- \\
+        CodeLlama 7B FT & OS & 89 & 89 & 0.325 & 7.2 & 12.5 & 33.3 \\
+        LlamaChat 7B FT & OS & 100 & 89 & 0.254 & 10.6 & 22.2 & 44.4 \\
+        LlamaChat 7B FT & ZS & 89 & 78 & 0.110 & 12.9 & 12.5 & 0.0 \\
+        CodeLlama 7B FT & ZS & 67 & 67 & 0.102 & 9.8 & 33.3 & 0.0 \\
+        ChatGPT (papier) & ZS & 100 & -- & -- & -- & -- & 77.8 \\
+        Gemini (papier) & ZS & 88.9 & -- & -- & -- & -- & 55.6 \\
+        LLaMA-2-13B (papier) & ZS & 33.3 & -- & -- & -- & -- & 22.2 \\
+        \bottomrule
+      \end{tabular}%
+    }
+  \end{center}
+
+  \vspace{0.3em}
+  \scriptsize
+  XML et BT sont exprimés en \%. Les colonnes Node-F1, TED et Judge Opus ne sont tracées que lorsqu'une réévaluation complète avec notre pipeline est possible.
+\end{frame}
+
+\begin{frame}
+  \frametitle{Vue graphique : Node-F1 et TED}
+
+  \begin{columns}[T]
+    \begin{column}{0.49\textwidth}
+      \centering
+      \scriptsize\textbf{Node-F1}\\[0.2em]
+      \begin{tikzpicture}
+        \begin{axis}[
+          ybar,
+          width=\linewidth,
+          height=4.9cm,
+          bar width=6pt,
+          ymin=0,
+          ymax=0.9,
+          symbolic x coords={O4-v4ZS,O4-v4OS,O4-v1OS,O4-v1ZS,CL-OS,LC-OS,LC-ZS,CL-ZS},
+          xtick=data,
+          x tick label style={rotate=45,anchor=east,font=\tiny},
+          yticklabel style={font=\tiny},
+          nodes near coords,
+          every node near coord/.append style={font=\tiny,rotate=90,anchor=west},
+          legend style={font=\tiny,draw=none,at={(0.5,1.02)},anchor=south}
+        ]
+          \addplot[fill=blue!70!black] coordinates {(O4-v4ZS,0.812) (O4-v4OS,0.781) (O4-v1OS,0.733) (O4-v1ZS,0.538)};
+          \addplot[fill=gray!65] coordinates {(CL-OS,0.325) (LC-OS,0.254) (LC-ZS,0.110) (CL-ZS,0.102)};
+          \legend{Opus 4.8,FT papier}
+        \end{axis}
+      \end{tikzpicture}
+    \end{column}
+    \begin{column}{0.49\textwidth}
+      \centering
+      \scriptsize\textbf{TED}\\[0.2em]
+      \begin{tikzpicture}
+        \begin{axis}[
+          ybar,
+          width=\linewidth,
+          height=4.9cm,
+          bar width=6pt,
+          ymin=0,
+          ymax=14,
+          symbolic x coords={O4-v4ZS,O4-v4OS,O4-v1OS,O4-v1ZS,CL-OS,LC-OS,LC-ZS,CL-ZS},
+          xtick=data,
+          x tick label style={rotate=45,anchor=east,font=\tiny},
+          yticklabel style={font=\tiny},
+          nodes near coords,
+          every node near coord/.append style={font=\tiny,rotate=90,anchor=west},
+          legend style={font=\tiny,draw=none,at={(0.5,1.02)},anchor=south}
+        ]
+          \addplot[fill=blue!70!black] coordinates {(O4-v4ZS,3.1) (O4-v4OS,3.3) (O4-v1OS,4.7) (O4-v1ZS,6.0)};
+          \addplot[fill=gray!65] coordinates {(CL-OS,7.2) (LC-OS,10.6) (LC-ZS,12.9) (CL-ZS,9.8)};
+          \legend{Opus 4.8,FT papier}
+        \end{axis}
+      \end{tikzpicture}
+    \end{column}
+  \end{columns}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Vue graphique : jugement observé}
+
+  \centering
+  \begin{tikzpicture}
+    \begin{axis}[
+      ybar,
+      width=0.92\textwidth,
+      height=5.8cm,
+      bar width=10pt,
+      ymin=0,
+      ymax=100,
+      ylabel={Correct (\%)},
+      symbolic x coords={O4-v4ZS,O4-v4OS,O4-v1OS,O4-v1ZS,CL-OS,LC-OS,LC-ZS,CL-ZS},
+      xtick=data,
+      x tick label style={rotate=35,anchor=east,font=\scriptsize},
+      yticklabel style={font=\scriptsize},
+      nodes near coords,
+      every node near coord/.append style={font=\tiny,rotate=90,anchor=west},
+      legend style={font=\scriptsize,draw=none,at={(0.5,1.02)},anchor=south}
+    ]
+      \addplot[fill=blue!70!black] coordinates {(O4-v4ZS,66.7) (O4-v4OS,77.8) (O4-v1OS,88.9) (O4-v1ZS,77.8)};
+      \addplot[fill=gray!65] coordinates {(CL-OS,12.5) (LC-OS,22.2) (LC-ZS,12.5) (CL-ZS,33.3)};
+      \legend{Opus 4.8,FT papier}
+    \end{axis}
+  \end{tikzpicture}
+\end{frame}
+
+\section{Synthèse et bilan}
+
+\begin{frame}
+  \frametitle{Analyse synthétique}
+
+  \begin{columns}[T]
+    \begin{column}{0.48\textwidth}
+      \begin{block}{Ce que montrent les résultats}
+        \small
+        \begin{itemize}
+          \item Opus 4.8 produit du XML exploitable à 100\% sur toutes nos configurations.
+          \item \texttt{v4\_action\_aware} zero-shot donne le meilleur alignement structurel avec la référence.
+          \item Le one-shot aide surtout \texttt{v1\_paper}, pas \texttt{v4\_action\_aware}.
+        \end{itemize}
+      \end{block}
+    \end{column}
+    \begin{column}{0.48\textwidth}
+      \begin{block}{Lecture des modèles FT}
+        \small
+        \begin{itemize}
+          \item Les 7B fine-tunés du papier restent très loin d'Opus 4.8.
+          \item Le fine-tuning observé ici ne fournit pas un concurrent crédible pour la meilleure performance brute.
+          \item Cela ne prouve pas qu'aucun FT futur ne dépassera Opus 4.8 ; cela montre seulement que ce n'est pas le cas avec les résultats disponibles.
+        \end{itemize}
+      \end{block}
+    \end{column}
+  \end{columns}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Bilan pour NAV4RAIL}
+
+  \begin{alertblock}{Message principal}
+    \small
+    Si l'objectif prioritaire du projet est \textbf{la meilleure performance de génération}, la décision la plus rationnelle est de conserver Claude Opus 4.8 comme référence opérationnelle.
+  \end{alertblock}
+
+  \vspace{0.4em}
+  \begin{itemize}
+    \item \textbf{Baseline recommandée :} \texttt{v4\_action\_aware} zero-shot comme référence principale, et \texttt{v1\_paper} one-shot comme point de comparaison côté juge.
+    \item \textbf{Quand fine-tuner ?} seulement si l'objectif devient coût, latence, embarqué, souveraineté ou contrôle plus fin du modèle.
+    \item \textbf{Conclusion défendable :} avec les évidences actuelles, rien ne justifie de quitter Opus 4.8 si le seul critère est la performance brute.
+  \end{itemize}
+\end{frame}
+
+\end{document}\documentclass[aspectratio=169]{beamer}
+
+\usepackage[utf8]{inputenc}
+\mode<presentation>
+\usetheme[visual,slim,framecount]{tptng}
+
+\usepackage[T1]{fontenc}
+\usepackage[french]{babel}
+\usepackage[babel]{microtype}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{amsmath}
+\usepackage{xcolor}
+\usepackage{tikz}
+\usepackage{pgfplots}
+
+\pgfplotsset{compat=1.18}
+
+\AtBeginSection[]{
+  \contentsframe[currentsection]
+}
+\renewcommand*{\contentsframename}{Plan}
+
+\title{Synthèse de la baseline BTGenBot}
+\subtitle{Claude Opus 4.8 face aux modèles du papier}
+
+\author{Benjamin Lepourtois \and Anne Faury \and Mohamed Amar \and Mourad Latoundji}
+\institute{Télécom Paris}
+\date[3 juin 2026]{3 juin 2026 \\ {\small NAV4RAIL}}
+
+\begin{document}
+
+\maketitle
+
+\section{Protocole d'évaluation}
+
+\begin{frame}
+  \frametitle{Cadre expérimental conservé}
+
+  \begin{columns}[T]
+    \begin{column}{0.57\textwidth}
+      \small
+      \textbf{Jeu d'évaluation :} les 9 tâches standardisées du papier BTGenBot (Izzo 2024), et non le dataset d'entraînement de 594 paires.
+
+      \vspace{0.4em}
+      \begin{center}
+        \begin{tabular}{clc}
+          \toprule
+          ID & Tâche & Complexité \\
+          \midrule
+          T1 & Navigation simple & $\star$ \\
+          T2 & Navigation avec priorité & $\star\star$ \\
+          T3 & Navigation avec fallback & $\star\star$ \\
+          T4 & Navigation + bras manipulateur & $\star\star$ \\
+          T5 & Exploration autonome & $\star\star\star$ \\
+          T6 & Exploration + manipulateur & $\star\star\star$ \\
+          T7 & Vision active + saisie & $\star\star\star\star$ \\
+          T8 & Traitement de matériaux & $\star\star\star\star$ \\
+          T9 & Assemblage multi-stations & $\star\star\star\star$ \\
+          \bottomrule
+        \end{tabular}
+      \end{center}
+    \end{column}
+    \begin{column}{0.39\textwidth}
+      \begin{exampleblock}{Source commune}
+        \small
+        Les descriptions NL et les BTs de référence proviennent du même référentiel :
+
+        \vspace{0.3em}
+        \texttt{external/BTGenBot/}\\
+        \texttt{bt\_generator/config/}\\
+        \texttt{example\_retrieving.yaml}
+      \end{exampleblock}
+
+      \begin{alertblock}{Point clé}
+        \small
+        Les sorties FT du papier étaient déjà publiées dans le dépôt GitHub officiel BTGenBot. Elles ont donc été réévaluées avec notre pipeline commun.
+      \end{alertblock}
+    \end{column}
+  \end{columns}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Zero-shot, one-shot et pipeline}
+
+  \begin{columns}[T]
+    \begin{column}{0.48\textwidth}
+      \begin{block}{Zero-shot / One-shot}
+        \small
+        \textbf{Zero-shot :} instructions système + description de tâche.
+
+        \vspace{0.3em}
+        \textbf{One-shot :} même entrée, plus un exemple fixe T1.
+
+        \vspace{0.3em}
+        T1 reste évaluée en zero-shot pour éviter de fournir sa propre réponse.
+      \end{block}
+    \end{column}
+    \begin{column}{0.48\textwidth}
+      \begin{block}{Pipeline d'évaluation}
+        \small
+        1. Génération du BT XML
+
+        2. Vérification syntaxique
+
+        3. Calcul Node-F1 et TED
+
+        4. Jugement binaire \og Correct / Incorrect \fg{} par Claude Opus 4.8
+      \end{block}
+    \end{column}
+  \end{columns}
+
+  \vspace{0.4em}
+  \begin{exampleblock}{Rigueur de comparaison}
+    \small
+    Les configurations Opus 4.8 et les sorties FT du papier sont comparées sur un pipeline commun. Les métriques ne sont rapportées que lorsqu'une réévaluation complète est possible.
+  \end{exampleblock}
+\end{frame}
+
+\section{Métriques}
+
+\begin{frame}
+  \frametitle{Métriques retenues}
+
+  \begin{columns}[T]
+    \begin{column}{0.48\textwidth}
+      \begin{block}{Syntaxe}
+        \small
+        \textbf{XML valide :} le XML est parseable.
+
+        \vspace{0.4em}
+        \textbf{Structure BT valide :} présence de \texttt{<root>} et de \texttt{<BehaviorTree>}.
+      \end{block}
+
+      \begin{alertblock}{Limite connue}
+        \small
+        Ce contrôle est moins strict que Groot2 : il ne valide ni toute la palette de nœuds, ni les paramètres ROS2.
+      \end{alertblock}
+    \end{column}
+    \begin{column}{0.48\textwidth}
+      \begin{block}{Sémantique}
+        \small
+        \textbf{Node-F1 :} proximité des types de nœuds.
+
+        \vspace{0.4em}
+        \textbf{TED :} distance structurelle entre arbres.
+
+        \vspace{0.4em}
+        \textbf{LLM-as-Judge :} adéquation description $\leftrightarrow$ BT.
+      \end{block}
+
+      \begin{exampleblock}{Lecture}
+        \small
+        Node-F1 et TED comparent au BT de référence. Le juge évalue la correspondance à la description.
+      \end{exampleblock}
+    \end{column}
+  \end{columns}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Node-F1 : définition}
+
+  \small
+  \textbf{Définition :} F1-score calculé sur le multiset des \textbf{types de nœuds} du BT généré vs le BT de référence.
+
+  \vspace{0.5em}
+  \textbf{Nœuds exclus :} \texttt{root}, \texttt{BehaviorTree}, \texttt{TreeNodesModel}, \texttt{input\_port}, \texttt{output\_port}, \texttt{inout\_port}.
+
+  \vspace{0.6em}
+  \[
+    \mathrm{Precision} = \frac{|N_{pred} \cap N_{ref}|}{|N_{pred}|}
+    \qquad
+    \mathrm{Recall} = \frac{|N_{pred} \cap N_{ref}|}{|N_{ref}|}
+  \]
+
+  \[
+    \mathrm{Node\text{-}F1} = \frac{2 \cdot \mathrm{Precision} \cdot \mathrm{Recall}}{\mathrm{Precision} + \mathrm{Recall}}
+  \]
+
+  \vspace{0.3em}
+  \begin{block}{Interprétation}
+    \small
+    La métrique récompense le bon choix des nœuds métier et leur proportion, pas seulement une structure XML valide.
+  \end{block}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Node-F1 : exemple concret sur T4}
+
+  \scriptsize
+  \begin{columns}[T]
+    \begin{column}{0.48\textwidth}
+      \textbf{BT de référence}\\
+      \texttt{<BehaviorTree>}\\
+      \texttt{\ \ <Sequence>}\\
+      \texttt{\ \ \ \ <MoveTo .../>}\\
+      \texttt{\ \ \ \ <ActivateManipulator/>}\\
+      \texttt{\ \ </Sequence>}\\
+      \texttt{</BehaviorTree>}
+
+      \vspace{0.5em}
+      \textbf{BT généré}\\
+      \texttt{<BehaviorTree>}\\
+      \texttt{\ \ <Sequence>}\\
+      \texttt{\ \ \ \ <Action .../>}\\
+      \texttt{\ \ \ \ <Action .../>}\\
+      \texttt{\ \ </Sequence>}\\
+      \texttt{</BehaviorTree>}
+    \end{column}
+    \begin{column}{0.48\textwidth}
+      \begin{tabular}{p{0.22\textwidth}p{0.23\textwidth}}
+        \toprule
+        Multiset & Types \\
+        \midrule
+        $N_{ref}$ & \{Sequence: 1, MoveTo: 1, ActivateManipulator: 1\} \\
+        $N_{pred}$ & \{Sequence: 1, Action: 2\} \\
+        $N_{ref} \cap N_{pred}$ & \{Sequence: 1\} \\
+        \bottomrule
+      \end{tabular}
+
+      \vspace{0.6em}
+      \[
+        \mathrm{Precision} = \frac{1}{3}
+        \qquad
+        \mathrm{Recall} = \frac{1}{3}
+      \]
+      \[
+        \mathrm{Node\text{-}F1} = 0.333
+      \]
+
+      \vspace{0.3em}
+      \textbf{Lecture :} la structure \texttt{Sequence} est correcte, mais les nœuds métier ont été remplacés par un \texttt{Action} générique.
+    \end{column}
+  \end{columns}
+\end{frame}
+
+\begin{frame}
+  \frametitle{TED : définition}
+
+  \small
+  \textbf{TED} (Tree Edit Distance) est la distance de Zhang-Shasha entre deux arbres ordonnés.
+
+  \vspace{0.5em}
+  \begin{itemize}
+    \item Elle compte le nombre minimal d'opérations nécessaires pour transformer le BT généré en BT de référence.
+    \item Les opérations sont : insertion, suppression, renommage de nœud.
+    \item \textbf{TED = 0} signifie un arbre identique ; plus la distance augmente, plus l'écart structurel est important.
+  \end{itemize}
+
+  \vspace{0.5em}
+  \begin{exampleblock}{Interprétation}
+    \small
+    TED $\leq 3$ : BT structurellement proche.\\
+    TED $> 10$ : structure significativement différente.
+  \end{exampleblock}
+\end{frame}
+
+\begin{frame}
+  \frametitle{TED : exemple concret sur T4}
+
+  \begin{columns}[T]
+    \begin{column}{0.47\textwidth}
+      \begin{block}{Arbre de référence}
+        \ttfamily\small
+        Sequence\\
+        / \hspace{3.5em} \\
+        MoveTo \hspace{1em} ActivateManipulator
+      \end{block}
+    \end{column}
+    \begin{column}{0.47\textwidth}
+      \begin{block}{Arbre généré}
+        \ttfamily\small
+        Sequence\\
+        / \hspace{3.5em} \\
+        Action \hspace{1.8em} Action
+      \end{block}
+    \end{column}
+  \end{columns}
+
+  \vspace{0.4em}
+  \begin{enumerate}
+    \item Renommer \texttt{Action} $\rightarrow$ \texttt{MoveTo}
+    \item Renommer \texttt{Action} $\rightarrow$ \texttt{ActivateManipulator}
+  \end{enumerate}
+
+  \vspace{0.3em}
+  \begin{alertblock}{Résultat}
+    \small
+    Deux opérations suffisent, donc \textbf{TED = 2}.
+  \end{alertblock}
+\end{frame}
+
+\begin{frame}
+  \frametitle{LLM-as-Judge : protocole de jugement}
+
+  \small
+  \textbf{Définition :} un juge reçoit la description en langage naturel et le BT XML généré, puis répond seulement \texttt{Correct} ou \texttt{Incorrect}.
+
+  \vspace{0.5em}
+  \begin{block}{Prompt du juge}
+    \ttfamily\scriptsize
+    Given a description of a behavior tree in natural language and a BT in XML format, say if the description matches the tree. Output only Correct or Incorrect.
+  \end{block}
+
+  \vspace{0.4em}
+  \begin{columns}[T]
+    \begin{column}{0.48\textwidth}
+      \begin{block}{Choix du juge}
+        \small
+        Claude Opus 4.8 est utilisé comme juge unique pour toutes les configurations.
+      \end{block}
+    \end{column}
+    \begin{column}{0.48\textwidth}
+      \begin{block}{Pourquoi pas Haiku ?}
+        \small
+        Haiku produisait des faux négatifs sur des cas limites sémantiquement valides ; Opus s'est montré plus cohérent.
+      \end{block}
+    \end{column}
+  \end{columns}
+\end{frame}
+
+\section{Comparatif complet}
+
+\begin{frame}
+  \frametitle{Comparatif complet sur un même référentiel}
+
+  \tiny
+  \setlength{\tabcolsep}{3pt}
+  \renewcommand{\arraystretch}{1.08}
+  \begin{center}
+    \resizebox{\textwidth}{!}{%
+      \begin{tabular}{llcccccc}
+        \toprule
+        Modèle & Mode & XML & BT & Node-F1 & TED & Judge Opus & Éval. papier \\
+        \midrule
+        \textbf{Opus 4.8 v4\_action\_aware} & ZS & \textbf{100} & \textbf{100} & \textbf{0.812} & \textbf{3.1} & 66.7 & -- \\
+        \textbf{Opus 4.8 v4\_action\_aware} & OS & \textbf{100} & \textbf{100} & 0.781 & 3.3 & 77.8 & -- \\
+        \textbf{Opus 4.8 v1\_paper} & OS & \textbf{100} & \textbf{100} & 0.733 & 4.7 & \textbf{88.9} & -- \\
+        \textbf{Opus 4.8 v1\_paper} & ZS & \textbf{100} & \textbf{100} & 0.538 & 6.0 & 77.8 & -- \\
+        CodeLlama 7B FT & OS & 89 & 89 & 0.325 & 7.2 & 12.5 & 33.3 \\
+        LlamaChat 7B FT & OS & 100 & 89 & 0.254 & 10.6 & 22.2 & 44.4 \\
+        LlamaChat 7B FT & ZS & 89 & 78 & 0.110 & 12.9 & 12.5 & 0.0 \\
+        CodeLlama 7B FT & ZS & 67 & 67 & 0.102 & 9.8 & 33.3 & 0.0 \\
+        ChatGPT (papier) & ZS & 100 & -- & -- & -- & -- & 77.8 \\
+        Gemini (papier) & ZS & 88.9 & -- & -- & -- & -- & 55.6 \\
+        LLaMA-2-13B (papier) & ZS & 33.3 & -- & -- & -- & -- & 22.2 \\
+        \bottomrule
+      \end{tabular}%
+    }
+  \end{center}
+
+  \vspace{0.3em}
+  \scriptsize
+  XML et BT sont exprimés en \%. Les colonnes Node-F1, TED et Judge Opus ne sont remplies que lorsqu'une réévaluation complète avec notre pipeline est possible.
+\end{frame}
+
+\begin{frame}
+  \frametitle{Vue graphique : Node-F1 et TED}
+
+  \begin{columns}[T]
+    \begin{column}{0.49\textwidth}
+      \centering
+      \scriptsize\textbf{Node-F1}\\[0.2em]
+      \begin{tikzpicture}
+        \begin{axis}[
+          ybar,
+          width=\linewidth,
+          height=4.9cm,
+          bar width=6pt,
+          ymin=0,
+          ymax=0.9,
+          symbolic x coords={O4-v4ZS,O4-v4OS,O4-v1OS,O4-v1ZS,CL-OS,LC-OS,LC-ZS,CL-ZS},
+          xtick=data,
+          x tick label style={rotate=45,anchor=east,font=\tiny},
+          yticklabel style={font=\tiny},
+          nodes near coords,
+          every node near coord/.append style={font=\tiny,rotate=90,anchor=west},
+          legend style={font=\tiny,draw=none,at={(0.5,1.02)},anchor=south}
+        ]
+          \addplot[fill=blue!70!black] coordinates {(O4-v4ZS,0.812) (O4-v4OS,0.781) (O4-v1OS,0.733) (O4-v1ZS,0.538)};
+          \addplot[fill=gray!65] coordinates {(CL-OS,0.325) (LC-OS,0.254) (LC-ZS,0.110) (CL-ZS,0.102)};
+          \legend{Opus 4.8,FT papier}
+        \end{axis}
+      \end{tikzpicture}
+    \end{column}
+    \begin{column}{0.49\textwidth}
+      \centering
+      \scriptsize\textbf{TED}\\[0.2em]
+      \begin{tikzpicture}
+        \begin{axis}[
+          ybar,
+          width=\linewidth,
+          height=4.9cm,
+          bar width=6pt,
+          ymin=0,
+          ymax=14,
+          symbolic x coords={O4-v4ZS,O4-v4OS,O4-v1OS,O4-v1ZS,CL-OS,LC-OS,LC-ZS,CL-ZS},
+          xtick=data,
+          x tick label style={rotate=45,anchor=east,font=\tiny},
+          yticklabel style={font=\tiny},
+          nodes near coords,
+          every node near coord/.append style={font=\tiny,rotate=90,anchor=west},
+          legend style={font=\tiny,draw=none,at={(0.5,1.02)},anchor=south}
+        ]
+          \addplot[fill=blue!70!black] coordinates {(O4-v4ZS,3.1) (O4-v4OS,3.3) (O4-v1OS,4.7) (O4-v1ZS,6.0)};
+          \addplot[fill=gray!65] coordinates {(CL-OS,7.2) (LC-OS,10.6) (LC-ZS,12.9) (CL-ZS,9.8)};
+          \legend{Opus 4.8,FT papier}
+        \end{axis}
+      \end{tikzpicture}
+    \end{column}
+  \end{columns}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Vue graphique : jugement observé}
+
+  \centering
+  \begin{tikzpicture}
+    \begin{axis}[
+      ybar,
+      width=0.92\textwidth,
+      height=5.8cm,
+      bar width=10pt,
+      ymin=0,
+      ymax=100,
+      ylabel={Correct (\%)},
+      symbolic x coords={O4-v4ZS,O4-v4OS,O4-v1OS,O4-v1ZS,CL-OS,LC-OS,LC-ZS,CL-ZS},
+      xtick=data,
+      x tick label style={rotate=35,anchor=east,font=\scriptsize},
+      yticklabel style={font=\scriptsize},
+      nodes near coords,
+      every node near coord/.append style={font=\tiny,rotate=90,anchor=west},
+      legend style={font=\scriptsize,draw=none,at={(0.5,1.02)},anchor=south}
+    ]
+      \addplot[fill=blue!70!black] coordinates {(O4-v4ZS,66.7) (O4-v4OS,77.8) (O4-v1OS,88.9) (O4-v1ZS,77.8)};
+      \addplot[fill=gray!65] coordinates {(CL-OS,12.5) (LC-OS,22.2) (LC-ZS,12.5) (CL-ZS,33.3)};
+      \legend{Opus 4.8,FT papier}
+    \end{axis}
+  \end{tikzpicture}
+
+  \vspace{0.3em}
+  \scriptsize
+  Le graphe est limité aux configurations réévaluées avec notre juge unique, afin de garder un protocole homogène.
+\end{frame}
+
+\section{Synthèse et bilan}
+
+\begin{frame}
+  \frametitle{Analyse synthétique}
+
+  \begin{columns}[T]
+    \begin{column}{0.48\textwidth}
+      \begin{block}{Ce que montrent les résultats}
+        \small
+        \begin{itemize}
+          \item Opus 4.8 produit du XML exploitable à 100\% sur toutes nos configurations.
+          \item \texttt{v4\_action\_aware} zero-shot donne le meilleur alignement structurel avec la référence.
+          \item Le one-shot aide surtout \texttt{v1\_paper}, pas \texttt{v4\_action\_aware}.
+        \end{itemize}
+      \end{block}
+    \end{column}
+    \begin{column}{0.48\textwidth}
+      \begin{block}{Lecture des modèles FT}
+        \small
+        \begin{itemize}
+          \item Les 7B fine-tunés du papier restent très loin d'Opus 4.8.
+          \item Le fine-tuning observé ici ne fournit pas un concurrent crédible pour la meilleure performance brute.
+          \item Cela ne prouve pas qu'aucun FT futur ne dépassera Opus 4.8 ; cela montre seulement que ce n'est pas le cas avec les résultats disponibles.
+        \end{itemize}
+      \end{block}
+    \end{column}
+  \end{columns}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Bilan pour NAV4RAIL}
+
+  \begin{alertblock}{Message principal}
+    \small
+    Si l'objectif prioritaire du projet est \textbf{la meilleure performance de génération}, la décision la plus rationnelle est de conserver Claude Opus 4.8 comme référence opérationnelle.
+  \end{alertblock}
+
+  \vspace{0.4em}
+  \begin{itemize}
+    \item \textbf{Baseline recommandée :} \texttt{v4\_action\_aware} zero-shot comme référence principale, et \texttt{v1\_paper} one-shot comme point de comparaison côté juge.
+    \item \textbf{Quand fine-tuner ?} seulement si l'objectif devient coût, latence, embarqué, souveraineté ou contrôle plus fin du modèle.
+    \item \textbf{Conclusion défendable :} avec les évidences actuelles, rien ne justifie de quitter Opus 4.8 si le seul critère est la performance brute.
+  \end{itemize}
+\end{frame}
+
+\end{document}
