@@ -37,3 +37,5 @@ presentations/**/*
 reunion*.md
 BTGenBot*.md
 2024*.pdf
+
+.claude/

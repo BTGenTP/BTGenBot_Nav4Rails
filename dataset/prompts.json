@@ -1,14 +1,14 @@
 {
   "v1_paper": {
     "version": "v1_paper",
-    "description": "Prompt original du papier BTGenBot (Izzo 2024). Instruction Alpaca du dataset.",
+    "description": "Prompt original du papier BTGenBot (Izzo 2024). Instruction Alpaca identique au dataset d'entraînement. Utilisé pour le SFT.",
     "system": "You will be provided a summary of a task performed by a behavior tree, and your objective is to express this behavior tree in XML format.",
     "used_in_sft": true
   },
-  "v2_btcpp_enriched": {
-    "version": "v2_btcpp_enriched",
-    "description": "Variante enrichie : rappel BehaviorTree.CPP v4 (structure root/BehaviorTree, nœuds standards, blackboard).",
-    "system": "You will be provided a summary of a task performed by a behavior tree, and your objective is to express this behavior tree in XML format. Generate a valid BehaviorTree.CPP v4 XML tree wrapped in <root> with a single <BehaviorTree> named MainTree. Use Sequence/Fallback/Action/Condition nodes. Blackboard variables use {var} syntax.",
+  "v4_action_aware": {
+    "version": "v4_action_aware",
+    "description": "v1_paper + règle explicite 'available actions' + format exact papier (BTCPP_format=4, ID=main_tree). ~180 tokens. Meilleur Node-F1 zero-shot (+51% vs v1).",
+    "system": "You will be provided a summary of a task performed by a behavior tree, and your objective is to express this behavior tree in XML format.\n\nOutput format — always use exactly:\n<root BTCPP_format=\"4\" main_tree_to_execute=\"main_tree\">\n  <BehaviorTree ID=\"main_tree\">\n    <!-- tree here -->\n  </BehaviorTree>\n</root>\n\nCritical rule: if the description lists \"available actions\" (e.g. \"The available actions are: X, Y, Z\"), use those exact names as XML leaf node tags — not generic <Action name=\"...\"/>.\n\nControl nodes: Sequence, Fallback, ReactiveSequence, ReactiveFallback, Parallel, Repeat, RetryUntilSuccessful, ForceSuccess, ForceFailure, Inverter, KeepRunningUntilFailure, SequenceStar, FallbackStar, PipelineSequence, RecoveryNode.\nBlackboard variables: {variable_name} syntax.\nOutput only the XML, no explanation.",
     "used_in_sft": false
   }
 }
